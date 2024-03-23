@@ -7,12 +7,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/DenisBytes/go-create-app/cmd/flags"
-	"github.com/DenisBytes/go-create-app/cmd/program"
-	"github.com/DenisBytes/go-create-app/cmd/steps"
-	"github.com/DenisBytes/go-create-app/cmd/ui/multiinput"
-	"github.com/DenisBytes/go-create-app/cmd/ui/spinner"
-	"github.com/DenisBytes/go-create-app/cmd/ui/textinput"
+	"github.com/DenisBytes/go-create-templ/cmd/flags"
+	"github.com/DenisBytes/go-create-templ/cmd/program"
+	"github.com/DenisBytes/go-create-templ/cmd/steps"
+	"github.com/DenisBytes/go-create-templ/cmd/ui/multiinput"
+	"github.com/DenisBytes/go-create-templ/cmd/ui/spinner"
+	"github.com/DenisBytes/go-create-templ/cmd/ui/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -47,7 +47,7 @@ func init() {
 }
 
 var createCmd = &cobra.Command{
-	Use:   "create",
+	Use:   "init",
 	Short: "Create a Go project and don't worry about the structure",
 	Long:  "Go Blueprint is a CLI tool that allows you to focus on the actual Go code, and not the project structure. Perfect for someone new to the Go language",
 
@@ -138,10 +138,7 @@ var createCmd = &cobra.Command{
 				}
 			}
 		}()
-
-		fmt.Println("WOWOOWWOWOOWOWOWOW")
 		fmt.Println(project.ProjectName, project.ProjectType)
-
 	},
 }
 

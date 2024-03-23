@@ -3,8 +3,8 @@ package multiinput
 import (
 	"fmt"
 
-	"github.com/DenisBytes/go-create-app/cmd/steps"
-	"github.com/DenisBytes/go-create-app/cmd/program"
+	"github.com/DenisBytes/go-create-templ/cmd/program"
+	"github.com/DenisBytes/go-create-templ/cmd/steps"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )

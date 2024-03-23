@@ -1,6 +1,6 @@
 package steps
 
-import "github.com/DenisBytes/go-create-app/cmd/flags"
+import "github.com/DenisBytes/go-create-templ/cmd/flags"
 
 type StepSchema struct {
 	StepName string

@@ -1,4 +1,4 @@
-module github.com/DenisBytes/go-create-app
+module github.com/DenisBytes/go-create-templ
 
 go 1.22.1
 
