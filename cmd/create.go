@@ -139,6 +139,24 @@ var createCmd = &cobra.Command{
 			}
 		}()
 		fmt.Println(project.ProjectName, project.ProjectType)
+
+		err = project.CreateProject()
+		if err != nil {
+			if releaseErr := spinner.ReleaseTerminal(); releaseErr != nil {
+				log.Printf("Problem releasing terminal: %v", releaseErr)
+			}
+			log.Printf("Problem creating files for project. %v", err)
+			cobra.CheckErr(textinput.CreateErrorInputModel(err).Err())
+		}
+
+		fmt.Println(endingMsgStyle.Render("\nNext steps:"))
+		fmt.Println(endingMsgStyle.Render(fmt.Sprintf("• cd into the newly created project with: `cd %s`\n", project.ProjectName)))
+
+		err = spinner.ReleaseTerminal()
+		if err != nil {
+			log.Printf("Could not release terminal: %v", err)
+			cobra.CheckErr(err)
+		}
 	},
 }
 

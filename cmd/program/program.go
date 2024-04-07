@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/DenisBytes/go-create-templ/cmd/flags"
 	"github.com/DenisBytes/go-create-templ/cmd/template/framework"
@@ -29,7 +30,7 @@ type Framework struct {
 
 // TODO: update the fields
 type Templater interface {
-	Routes() []byte
+	Main() []byte
 }
 
 func (p *Project) ExitCLI(tprogram *tea.Program) {
@@ -69,7 +70,7 @@ func (p *Project) createFrameworkMap() {
 	}
 }
 
-func (p *Project) createProject() error {
+func (p *Project) CreateProject() error {
 	if _, err := os.Stat(p.AbsolutePath); os.IsNotExist(err) {
 		if err := os.Mkdir(p.AbsolutePath, 0754); err != nil {
 			log.Printf("Could not create directory: %v", err)
@@ -139,9 +140,75 @@ func (p *Project) createProject() error {
 		return err
 	}
 
+	err = p.CreateFileWithInjection(cmdApiPath, projectPath, "main.go", "main")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = utils.ExecuteCmd("git", []string{"init"}, projectPath)
+	if err != nil {
+		log.Printf("Error initializing git repo: %v", err)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	gitignoreFile, err := os.Create(filepath.Join(projectPath, ".gitignore"))
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+	defer gitignoreFile.Close()
+
+	gitignoreTemplate := template.Must(template.New(".gitignore").Parse(string(framework.GitIgnoreTemplate())))
+	err = gitignoreTemplate.Execute(gitignoreFile, p)
+	if err != nil {
+		return err
+	}
+
+	airTomlFile, err := os.Create(filepath.Join(projectPath, ".air.toml"))
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	defer airTomlFile.Close()
+
+	airTomlTemplate := template.Must(template.New("airtoml").Parse(string(framework.AirTomlTemplate())))
+	err = airTomlTemplate.Execute(airTomlFile, p)
+	if err != nil {
+		return err
+	}
+
+	err = utils.GoTidy(projectPath)
+	if err != nil {
+		log.Printf("Could not go tidy in new project %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoFmt(projectPath)
+	if err != nil {
+		log.Printf("Could not gofmt in new project %v\n", err)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = utils.ExecuteCmd("git", []string{"add", "."}, projectPath)
+	if err != nil {
+		log.Printf("Error adding files to git repo: %v", err)
+		cobra.CheckErr(err)
+		return err
+	}
+	
+	err = utils.ExecuteCmd("git", []string{"commit", "-m", "Initial commit"}, projectPath)
+	if err != nil {
+		log.Printf("Error committing files to git repo: %v", err)
+		cobra.CheckErr(err)
+		return err
+	}
+
 	return nil
 }
-
 
 func (p *Project) CreatePath(pathToCreate string, projectPath string) error {
 	path := filepath.Join(projectPath, pathToCreate)
@@ -151,6 +218,43 @@ func (p *Project) CreatePath(pathToCreate string, projectPath string) error {
 			log.Printf("Error creating directory %v\n", err)
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (p *Project) CreateFileWithInjection(pathToCreate string, projectPath string, fileName string, methodName string) error {
+	createdFile, err := os.Create(filepath.Join(projectPath, pathToCreate, fileName))
+	if err != nil {
+		return err
+	}
+
+	defer createdFile.Close()
+
+	switch methodName {
+	case "main":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.Main())))
+		err = createdTemplate.Execute(createdFile, p)
+		// case "server":
+		// 	createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.Server())))
+		// 	err = createdTemplate.Execute(createdFile, p)
+		// case "routes":
+		// 	routeFileBytes := p.FrameworkMap[p.ProjectType].templater.Routes()
+		// 	createdTemplate := template.Must(template.New(fileName).Parse(string(routeFileBytes)))
+		// 	err = createdTemplate.Execute(createdFile, p)
+		// case "releaser":
+		// 	createdTemplate := template.Must(template.New(fileName).Parse(string(advanced.Releaser())))
+		// 	err = createdTemplate.Execute(createdFile, p)
+		// case "releaser-config":
+		// 	createdTemplate := template.Must(template.New(fileName).Parse(string(advanced.ReleaserConfig())))
+		// 	err = createdTemplate.Execute(createdFile, p)
+		// case "env":
+		// 	createdTemplate := template.Must(template.New(fileName).Parse(string(tpl.GlobalEnvTemplate())))
+		// 	err = createdTemplate.Execute(createdFile, p)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return nil
