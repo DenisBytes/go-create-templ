@@ -64,6 +64,11 @@ const (
 )
 
 func (p *Project) createFrameworkMap() {
+
+	if p.FrameworkMap == nil {
+        p.FrameworkMap = make(map[flags.Framework]Framework)
+    }
+
 	p.FrameworkMap[flags.Chi] = Framework{
 		packageName: chiPackage,
 		templater:   framework.ChiTemplates{},
@@ -77,7 +82,7 @@ func (p *Project) CreateProject() error {
 			return err
 		}
 	}
-
+	fmt.Println("TEST 1--------------------------------")
 	nameSet, err := utils.CheckGitConfig("user.name")
 	if err != nil {
 		cobra.CheckErr(err)
@@ -88,6 +93,8 @@ func (p *Project) CreateProject() error {
 		panic("\nGIT CONFIG ISSUE: user.name is not set in git config.\n")
 	}
 
+	fmt.Println("TEST 2--------------------------------")
+
 	emailSet, err := utils.CheckGitConfig("user.email")
 	if err != nil {
 		cobra.CheckErr(err)
@@ -97,6 +104,8 @@ func (p *Project) CreateProject() error {
 		fmt.Println("Please set up git config before trying again.")
 		panic("\nGIT CONFIG ISSUE: user.email is not set in git config.\n")
 	}
+
+	fmt.Println("TEST 3--------------------------------")
 
 	p.ProjectName = strings.TrimSpace(p.ProjectName)
 
@@ -109,7 +118,9 @@ func (p *Project) CreateProject() error {
 		}
 	}
 
+	fmt.Println("TEST 4--------------------------------")
 	p.createFrameworkMap()
+	fmt.Println("TEST 5--------------------------------")
 
 	// Create go.mod
 	err = utils.InitGoMod(p.ProjectName, projectPath)
@@ -125,6 +136,7 @@ func (p *Project) CreateProject() error {
 			cobra.CheckErr(err)
 		}
 	}
+
 
 	// Install the godotenv package
 	err = utils.GoGetPackage(projectPath, godotenvPackage)
