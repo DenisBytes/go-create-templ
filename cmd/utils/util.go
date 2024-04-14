@@ -57,6 +57,19 @@ func GoGetPackage(appDir string, packages []string) error {
 	return nil
 }
 
+
+func GoInstallPackage(appDir string, packages []string) error {
+	for _, packageName := range packages {
+		if err := ExecuteCmd("go",
+			[]string{"install", packageName},
+			appDir); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func GoTidy(appDir string) error {
 	err := ExecuteCmd("go", []string{"mod", "tidy"}, appDir)
 	if err != nil {

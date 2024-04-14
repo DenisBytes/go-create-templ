@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//this is where all the template placeholder values are
+// this is where all the template placeholder values are
 type Project struct {
 	ProjectName  string
 	Exit         bool
@@ -32,6 +32,7 @@ type Framework struct {
 // TODO: update the fields
 type Templater interface {
 	Main() []byte
+	HandlerAuth() []byte
 }
 
 func (p *Project) ExitCLI(tprogram *tea.Program) {
@@ -50,8 +51,17 @@ var (
 	fiberPackage = []string{"github.com/gofiber/fiber/v2"}
 	echoPackage  = []string{"github.com/labstack/echo/v4", "github.com/labstack/echo/v4/middleware"}
 
-	godotenvPackage = []string{"github.com/joho/godotenv"}
-	templPackage    = []string{"github.com/a-h/templ"}
+	godotenvPackage       = []string{"github.com/joho/godotenv"}
+	golangMigratePackage  = []string{"github.com/golang-migrate/migrate/v4"}
+	templPackage          = []string{"github.com/a-h/templ"}
+	uuidPackage           = []string{"github.com/google/uuid"}
+	sessionPackage        = []string{"github.com/gorilla/sessions"}
+	postgresDriverPackage = []string{"github.com/lib/pq"}
+	supabasePackage       = []string{"github.com/nedpals/supabase-go"}
+	bunPackage1           = []string{"github.com/uptrace/bun"}
+	bunPackage2           = []string{"github.com/uptrace/bun/dialect/pgdialect"}
+	bunPackage3           = []string{"github.com/uptrace/bun/extra/bundebug"}
+	airPackage            = []string{"github.com/cosmtrek/air@latest"}
 )
 
 const (
@@ -77,12 +87,16 @@ func (p *Project) createFrameworkMap() {
 }
 
 func (p *Project) CreateProject() error {
+
+	// checking if absolute path exists
 	if _, err := os.Stat(p.AbsolutePath); os.IsNotExist(err) {
 		if err := os.Mkdir(p.AbsolutePath, 0754); err != nil {
 			log.Printf("Could not create directory: %v", err)
 			return err
 		}
 	}
+
+	// checking git config --get username
 	nameSet, err := utils.CheckGitConfig("user.name")
 	if err != nil {
 		cobra.CheckErr(err)
@@ -93,6 +107,7 @@ func (p *Project) CreateProject() error {
 		panic("\nGIT CONFIG ISSUE: user.name is not set in git config.\n")
 	}
 
+	// checking git config --get email
 	emailSet, err := utils.CheckGitConfig("user.email")
 	if err != nil {
 		cobra.CheckErr(err)
@@ -104,8 +119,8 @@ func (p *Project) CreateProject() error {
 	}
 
 	p.ProjectName = strings.TrimSpace(p.ProjectName)
-
 	projectPath := filepath.Join(p.AbsolutePath, p.ProjectName)
+
 	if _, err := os.Stat(projectPath); os.IsNotExist(err) {
 		err := os.MkdirAll(projectPath, 0751)
 		if err != nil {
@@ -116,12 +131,14 @@ func (p *Project) CreateProject() error {
 
 	p.createFrameworkMap()
 
+	// initializing go project (go mod init <name of project>)
 	err = utils.InitGoMod(p.ProjectName, projectPath)
 	if err != nil {
 		log.Printf("Could not initialize go.mod in new project %v\n", err)
 		cobra.CheckErr(err)
 	}
 
+	// importing framework if not standard library (go get <framework>)
 	if p.ProjectType != flags.StandardLibrary {
 		err = utils.GoGetPackage(projectPath, p.FrameworkMap[p.ProjectType].packageName)
 		if err != nil {
@@ -130,7 +147,80 @@ func (p *Project) CreateProject() error {
 		}
 	}
 
+	// importing godotenv package (go get <godotenvPackage>)
 	err = utils.GoGetPackage(projectPath, godotenvPackage)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoInstallPackage(projectPath, templPackage)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoGetPackage(projectPath, templPackage)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoInstallPackage(projectPath, airPackage)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoGetPackage(projectPath, airPackage)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoGetPackage(projectPath, golangMigratePackage)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoGetPackage(projectPath, postgresDriverPackage)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoGetPackage(projectPath, sessionPackage)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoGetPackage(projectPath, supabasePackage)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoGetPackage(projectPath, uuidPackage)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoGetPackage(projectPath, bunPackage1)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoGetPackage(projectPath, bunPackage2)
+	if err != nil {
+		log.Printf("Could not install go dependency %v\n", err)
+		cobra.CheckErr(err)
+	}
+
+	err = utils.GoGetPackage(projectPath, bunPackage3)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
 		cobra.CheckErr(err)
