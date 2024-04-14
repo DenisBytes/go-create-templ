@@ -1,0 +1,21 @@
+package sb
+
+import (
+	"os"
+
+	"github.com/nedpals/supabase-go"
+)
+
+//find the token on this url
+const BaseAuthURL = "https://<token>.supabase.co/auth/v1/recover"
+
+var Client *supabase.Client
+
+// not same as built-in init func
+func Init() error {
+	sbHost := os.Getenv("SUPABASE_URL")
+	sbSecret := os.Getenv("SUPABASE_SECRET")
+	Client = supabase.CreateClient(sbHost, sbSecret)
+
+	return nil
+}

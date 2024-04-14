@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/DenisBytes/go-create-templ/cmd/flags"
-	"github.com/DenisBytes/go-create-templ/cmd/template/framework"
+	myTemplate "github.com/DenisBytes/go-create-templ/cmd/template"
 	"github.com/DenisBytes/go-create-templ/cmd/utils"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -72,7 +72,7 @@ func (p *Project) createFrameworkMap() {
 
 	p.FrameworkMap[flags.Chi] = Framework{
 		packageName: chiPackage,
-		templater:   framework.ChiTemplates{},
+		templater:   myTemplate.ChiTemplates{},
 	}
 }
 
@@ -163,7 +163,7 @@ func (p *Project) CreateProject() error {
 	}
 	defer gitignoreFile.Close()
 
-	gitignoreTemplate := template.Must(template.New(".gitignore").Parse(string(framework.GitIgnoreTemplate())))
+	gitignoreTemplate := template.Must(template.New(".gitignore").Parse(string(myTemplate.GitIgnoreTemplate())))
 	err = gitignoreTemplate.Execute(gitignoreFile, p)
 	if err != nil {
 		return err
@@ -177,7 +177,7 @@ func (p *Project) CreateProject() error {
 
 	defer airTomlFile.Close()
 
-	airTomlTemplate := template.Must(template.New("airtoml").Parse(string(framework.AirTomlTemplate())))
+	airTomlTemplate := template.Must(template.New("airtoml").Parse(string(myTemplate.AirTomlTemplate())))
 	err = airTomlTemplate.Execute(airTomlFile, p)
 	if err != nil {
 		return err
