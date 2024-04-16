@@ -33,6 +33,10 @@ type Framework struct {
 type Templater interface {
 	Main() []byte
 	HandlerAuth() []byte
+	HandlerHome() []byte
+	HandlerMiddleware() []byte
+	HandlerSettings() []byte
+	HandlerUtil() []byte
 }
 
 func (p *Project) ExitCLI(tprogram *tea.Program) {
@@ -66,7 +70,6 @@ var (
 
 const (
 	root                 = "/"
-	cmdApiPath           = "cmd/api"
 	cmdWebPath           = "cmd/web"
 	internalServerPath   = "internal/server"
 	internalDatabasePath = "internal/database"
@@ -226,14 +229,244 @@ func (p *Project) CreateProject() error {
 		cobra.CheckErr(err)
 	}
 
-	err = p.CreatePath(cmdApiPath, projectPath)
+	err = p.CreateFileWithInjection("/", projectPath, "main.go", "main")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/handler", projectPath)
 	if err != nil {
 		log.Printf("Error creating path: %s", projectPath)
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection(cmdApiPath, projectPath, "main.go", "main")
+	err = p.CreateFileWithInjection("/handler", projectPath, "auth.go", "handler/auth")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/handler", projectPath, "home.go", "handler/home")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/handler", projectPath, "middleware.go", "handler/middleware")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/handler", projectPath, "settings.go", "handler/settings")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/handler", projectPath, "util.go", "handler/util")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/db", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/db", projectPath, "db.go", "db/db")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/db", projectPath, "query.go", "db/query")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/cmd/migrate", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/cmd/migrate", projectPath, "main.go", "migrate/migrate")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/cmd/reset", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/cmd/reset", projectPath, "main.go", "migrate/reset")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/types", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/types", projectPath, "user.go", "types/user")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/types", projectPath, "account.go", "types/account")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/pkg/validate", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/pkg/validate", projectPath, "validate.go", "pkg/validate")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/pkg/sb", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/pkg/sb", projectPath, "supabase.go", "pkg/sb")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/pkg/util", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/pkg/util", projectPath, "util.go", "pkg/util")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/view", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/view", projectPath, "util.go", "view/util")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/view/auth", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/view/auth", projectPath, "auth.templ", "view/auth")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/view/css", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/view/css", projectPath, "app.css", "view/css")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/view/home", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/view/home", projectPath, "index.templ", "view/home")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/view/layout", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/view/layout", projectPath, "app.templ", "view/layout")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/view/settings", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/view/settings", projectPath, "account.templ", "view/settings")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath("/view/ui", projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/view/ui", projectPath, "navigation.templ", "view/ui/navigation")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection("/view/ui", projectPath, "toast.templ", "view/ui/toast")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
@@ -243,6 +476,40 @@ func (p *Project) CreateProject() error {
 	if err != nil {
 		log.Printf("Error initializing git repo: %v", err)
 		cobra.CheckErr(err)
+		return err
+	}
+
+	err = utils.ExecuteCmd("npm", []string{"install", "-D", "tailwindcss"}, projectPath)
+	if err != nil {
+		log.Printf("Error initializing git repo: %v", err)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = utils.ExecuteCmd("npm", []string{"install", "-D", "daisyui@latest"}, projectPath)
+	if err != nil {
+		log.Printf("Error initializing git repo: %v", err)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	tailwindConfigFile, err := os.Create(filepath.Join(projectPath, "tailwind.config.js"))
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+	defer tailwindConfigFile.Close()
+
+	err = utils.ExecuteCmd("npx", []string{"tailwind", "init", "-p"}, projectPath)
+	if err != nil {
+		log.Printf("Error initializing git repo: %v", err)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	tailwindConfigTemplate := template.Must(template.New("tailwind.config.js").Parse(string(myTemplate.TailwindConfigTemplate())))
+	err = tailwindConfigTemplate.Execute(tailwindConfigFile, p)
+	if err != nil {
 		return err
 	}
 
@@ -264,11 +531,23 @@ func (p *Project) CreateProject() error {
 		cobra.CheckErr(err)
 		return err
 	}
-
 	defer airTomlFile.Close()
 
 	airTomlTemplate := template.Must(template.New("airtoml").Parse(string(myTemplate.AirTomlTemplate())))
 	err = airTomlTemplate.Execute(airTomlFile, p)
+	if err != nil {
+		return err
+	}
+
+	makefileFile, err := os.Create(filepath.Join(projectPath, "Makefile"))
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+	defer makefileFile.Close()
+
+	makefileTemplate := template.Must(template.New("Makefile").Parse(string(myTemplate.MakefileTemplate())))
+	err = makefileTemplate.Execute(makefileFile, p)
 	if err != nil {
 		return err
 	}
@@ -328,22 +607,69 @@ func (p *Project) CreateFileWithInjection(pathToCreate string, projectPath strin
 	case "main":
 		createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.Main())))
 		err = createdTemplate.Execute(createdFile, p)
-		// case "server":
-		// 	createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.Server())))
-		// 	err = createdTemplate.Execute(createdFile, p)
-		// case "routes":
-		// 	routeFileBytes := p.FrameworkMap[p.ProjectType].templater.Routes()
-		// 	createdTemplate := template.Must(template.New(fileName).Parse(string(routeFileBytes)))
-		// 	err = createdTemplate.Execute(createdFile, p)
-		// case "releaser":
-		// 	createdTemplate := template.Must(template.New(fileName).Parse(string(advanced.Releaser())))
-		// 	err = createdTemplate.Execute(createdFile, p)
-		// case "releaser-config":
-		// 	createdTemplate := template.Must(template.New(fileName).Parse(string(advanced.ReleaserConfig())))
-		// 	err = createdTemplate.Execute(createdFile, p)
-		// case "env":
-		// 	createdTemplate := template.Must(template.New(fileName).Parse(string(tpl.GlobalEnvTemplate())))
-		// 	err = createdTemplate.Execute(createdFile, p)
+	case "handler/auth":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.HandlerAuth())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "handler/home":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.HandlerHome())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "handler/middleware":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.HandlerMiddleware())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "handler/settings":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.HandlerSettings())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "handler/util":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.HandlerUtil())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "db/db":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.DbTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "db/query":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.DbQueryTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "migrate/migrate":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.CmdMigrateTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "migrate/reset":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.CmdMigrateReset())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "types/user":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.TypesUserTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "types/account":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.TypesAccountTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "pkg/validate":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ValidateTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "pkg/sb":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.SupabaseTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "view/util":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewUtilTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "view/auth":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewAuthTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "view/css":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewCssTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "view/home":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewHomeTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "view/layout":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewLayoutTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "view/settings":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewAccountTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "view/ui/navigation":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewNavigationTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "view/ui/toast":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewToastTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
 	}
 
 	if err != nil {
