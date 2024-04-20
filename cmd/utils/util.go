@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"fmt"
 	"os/exec"
 )
 
@@ -27,6 +28,8 @@ func ExecuteCmd(name string, args []string, dir string) error {
 	command.Dir = dir
 	var out bytes.Buffer
 	command.Stdout = &out
+
+	fmt.Println("COMMAND:", name, args)
 	
 	if err := command.Run(); err != nil {
 		return err
@@ -49,6 +52,18 @@ func GoGetPackage(appDir string, packages []string) error {
 	for _, packageName := range packages {
 		if err := ExecuteCmd("go",
 			[]string{"get", "-u", packageName},
+			appDir); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func GoGetTempl(appDir string, packages []string) error {
+	for _, packageName := range packages {
+		if err := ExecuteCmd("go",
+			[]string{"get", packageName},
 			appDir); err != nil {
 			return err
 		}

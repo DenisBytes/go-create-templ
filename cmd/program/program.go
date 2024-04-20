@@ -420,7 +420,7 @@ func (p *Project) CreateProject() error {
 	}
 	fmt.Println("GO INSTALL TEMPL SUCCESS")
 
-	err = utils.GoGetPackage(projectPath, templPackage)
+	err = utils.GoGetTempl(projectPath, templPackage)
 	if err != nil {
 		log.Printf("Could not get go dependency %v\n", err)
 		cobra.CheckErr(err)
@@ -596,6 +596,19 @@ func (p *Project) CreateProject() error {
 
 	makefileTemplate := template.Must(template.New("Makefile").Parse(string(myTemplate.MakefileTemplate())))
 	err = makefileTemplate.Execute(makefileFile, p)
+	if err != nil {
+		return err
+	}
+
+	envFile, err := os.Create(filepath.Join(projectPath, ".env"))
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+	defer envFile.Close()
+
+	envFileTemplate := template.Must(template.New(".env").Parse(string(myTemplate.EnvTemplate())))
+	err = envFileTemplate.Execute(envFile, p)
 	if err != nil {
 		return err
 	}

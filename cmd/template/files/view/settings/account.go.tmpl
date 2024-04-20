@@ -3,7 +3,6 @@ package settings
 import "{{.ProjectName}}/view/layout"
 import "{{.ProjectName}}/types"
 import "{{.ProjectName}}/view/ui"
-import "{{.ProjectName}}/view"
 
 type ProfileParams struct {
     Username string
@@ -23,18 +22,6 @@ templ Index(user types.AuthenticatedUser) {
                     Username: user.Account.Username,
                 }, ProfileErrors{})
             </div>
-			<div class="mt-10">
-				<h1 class="text-lg font-semibold border-b border-gray-700 pb-2">Credits</h1>
-				<div class="sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center mt-8">
-					<dt class="">Credits</dt>
-					<dd class="sm:col-span-1 sm:mt-0">
-						<span>{ view.String(user.Account.Credits) }</span>
-					</dd>
-					<dd class="sm:col-span-1 sm:mt-0">
-						<a href="/buy-credits"class="btn btn-outline"> <i class="fa-solid fa-money-bill-transfer"></i> Buy Credits </a>
-					</dd>
-				</div>
-			</div>
         </div>
     }
 }
