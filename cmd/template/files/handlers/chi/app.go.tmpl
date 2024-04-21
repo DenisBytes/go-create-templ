@@ -5,12 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"{{.ProjectName}}/view/home"
+	"{{.ProjectName}}/view/app"
 )
 
-func HandleHomeIndex(w http.ResponseWriter, r *http.Request) error {
+func HandleAppIndex(w http.ResponseWriter, r *http.Request) error {
 	user := GetAuthenticatedUser(r)
 
-	fmt.Printf("%+v\n", user.Account)
 	return home.Index().Render(r.Context(), w)
 }

@@ -6,8 +6,14 @@ import (
 	"github.com/nedpals/supabase-go"
 )
 
-//find the token on this url
-const BaseAuthURL = "https://<token>.supabase.co/auth/v1/recover"
+/*  to find the url:
+	1) go to your supabase project 
+	2) go to Project Settings (at the bottom of the sidebar)
+	3) go to the Api section 
+	Project Url = url
+	Example : kjaendkdeaioq.supabase.co
+*/
+const BaseAuthURL = "https://<url>/auth/v1/recover"
 
 var Client *supabase.Client
 

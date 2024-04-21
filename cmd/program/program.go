@@ -1,7 +1,6 @@
 package program
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -34,6 +33,7 @@ type Templater interface {
 	Main() []byte
 	HandlerAuth() []byte
 	HandlerHome() []byte
+	HandlerApp() []byte
 	HandlerMiddleware() []byte
 	HandlerSettings() []byte
 	HandlerUtil() []byte
@@ -59,7 +59,6 @@ var (
 	golangMigratePackage        = []string{"github.com/golang-migrate/migrate/v4"}
 	golangMigrateInstallPackage = []string{"github.com/golang-migrate/migrate/v4/cmd/migrate@latest"}
 	templInstallPackage         = []string{"github.com/a-h/templ/cmd/templ@latest"}
-	templPackage                = []string{"github.com/a-h/templ"}
 	uuidPackage                 = []string{"github.com/google/uuid"}
 	sessionPackage              = []string{"github.com/gorilla/sessions"}
 	postgresDriverPackage       = []string{"github.com/lib/pq"}
@@ -71,12 +70,15 @@ var (
 )
 
 const (
-	root                 = "/"
-	cmdWebPath           = "cmd/web"
-	internalServerPath   = "internal/server"
-	internalDatabasePath = "internal/database"
-	gitHubActionPath     = ".github/workflows"
-	testHandlerPath      = "tests"
+	root             = "/"
+	handlerPath      = "/handler"
+	dbPath           = "/db"
+	migratePath      = "/cmd/migrate"
+	migrateResetPath = "/cmd/reset"
+	typesPath        = "/types"
+	validatePath     = "/pkg/validate"
+	sbPath           = "/pkg/sb"
+	pkgUtilPath      = "/pkg/util"
 )
 
 func (p *Project) createFrameworkMap() {
@@ -107,8 +109,6 @@ func (p *Project) CreateProject() error {
 		cobra.CheckErr(err)
 	}
 	if !nameSet {
-		fmt.Println("user.name is not set in git config.")
-		fmt.Println("Please set up git config before trying again.")
 		panic("\nGIT CONFIG ISSUE: user.name is not set in git config.\n")
 	}
 
@@ -118,8 +118,6 @@ func (p *Project) CreateProject() error {
 		cobra.CheckErr(err)
 	}
 	if !emailSet {
-		fmt.Println("user.email is not set in git config.")
-		fmt.Println("Please set up git config before trying again.")
 		panic("\nGIT CONFIG ISSUE: user.email is not set in git config.\n")
 	}
 
@@ -138,167 +136,167 @@ func (p *Project) CreateProject() error {
 
 	// initializing go project (go mod init <name of project>)
 	err = utils.InitGoMod(p.ProjectName, projectPath)
-	fmt.Println("GO MOD INIT TRY")
 	if err != nil {
 		log.Printf("Could not initialize go.mod in new project %v\n", err)
-		fmt.Println("GO MOD INIT FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO MOD INIT SUCCESS")
 
 	// importing framework if not standard library (go get <framework>)
 	if p.ProjectType != flags.StandardLibrary {
 		err = utils.GoGetPackage(projectPath, p.FrameworkMap[p.ProjectType].packageName)
-		fmt.Println("GO GET FRAMEWORK TRY")
 		if err != nil {
 			log.Printf("Could not get go dependency for the chosen framework %v\n", err)
-			fmt.Println("GO GET FRAMEWORK FAILED")
 			cobra.CheckErr(err)
 		}
 	}
-	fmt.Println("GO GET FRAMEWORK SUCCESS")
 
-	err = p.CreateFileWithInjection("/", projectPath, "main.go", "main")
+	err = p.CreateFileWithInjection(root, projectPath, "main.go", "main")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreatePath("/handler", projectPath)
-	if err != nil {
-		log.Printf("Error creating path: %s", projectPath)
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/handler", projectPath, "auth.go", "handler/auth")
-	if err != nil {
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/handler", projectPath, "home.go", "handler/home")
-	if err != nil {
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/handler", projectPath, "middleware.go", "handler/middleware")
-	if err != nil {
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/handler", projectPath, "settings.go", "handler/settings")
-	if err != nil {
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/handler", projectPath, "util.go", "handler/util")
-	if err != nil {
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreatePath("/db", projectPath)
+	err = p.CreatePath(handlerPath, projectPath)
 	if err != nil {
 		log.Printf("Error creating path: %s", projectPath)
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/db", projectPath, "db.go", "db/db")
+	err = p.CreateFileWithInjection(handlerPath, projectPath, "auth.go", "handler/auth")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/db", projectPath, "query.go", "db/query")
+	err = p.CreateFileWithInjection(handlerPath, projectPath, "home.go", "handler/home")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreatePath("/cmd/migrate", projectPath)
-	if err != nil {
-		log.Printf("Error creating path: %s", projectPath)
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/cmd/migrate", projectPath, "main.go", "migrate/migrate")
+	err = p.CreateFileWithInjection(handlerPath, projectPath, "app.go", "handler/app")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreatePath("/cmd/reset", projectPath)
-	if err != nil {
-		log.Printf("Error creating path: %s", projectPath)
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/cmd/reset", projectPath, "main.go", "migrate/reset")
+	err = p.CreateFileWithInjection(handlerPath, projectPath, "middleware.go", "handler/middleware")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreatePath("/types", projectPath)
+	err = p.CreateFileWithInjection(handlerPath, projectPath, "settings.go", "handler/settings")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(handlerPath, projectPath, "util.go", "handler/util")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath(dbPath, projectPath)
 	if err != nil {
 		log.Printf("Error creating path: %s", projectPath)
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/types", projectPath, "user.go", "types/user")
+	err = p.CreateFileWithInjection(dbPath, projectPath, "db.go", "db/db")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/types", projectPath, "account.go", "types/account")
+	err = p.CreateFileWithInjection(dbPath, projectPath, "query.go", "db/query")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreatePath("/pkg/validate", projectPath)
-	if err != nil {
-		log.Printf("Error creating path: %s", projectPath)
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/pkg/validate", projectPath, "validate.go", "pkg/validate")
-	if err != nil {
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreatePath("/pkg/sb", projectPath)
+	err = p.CreatePath(migratePath, projectPath)
 	if err != nil {
 		log.Printf("Error creating path: %s", projectPath)
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/pkg/sb", projectPath, "supabase.go", "pkg/sb")
+	err = p.CreateFileWithInjection(migratePath, projectPath, "main.go", "migrate/migrate")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreatePath("/pkg/util", projectPath)
+	err = p.CreatePath(migrateResetPath, projectPath)
 	if err != nil {
 		log.Printf("Error creating path: %s", projectPath)
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/pkg/util", projectPath, "util.go", "pkg/util")
+	err = p.CreateFileWithInjection(migrateResetPath, projectPath, "main.go", "migrate/reset")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath(typesPath, projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(typesPath, projectPath, "user.go", "types/user")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(typesPath, projectPath, "account.go", "types/account")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath(validatePath, projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(validatePath, projectPath, "validate.go", "pkg/validate")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath(sbPath, projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(sbPath, projectPath, "supabase.go", "pkg/sb")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath(pkgUtilPath, projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(pkgUtilPath, projectPath, "util.go", "pkg/util")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
@@ -356,6 +354,13 @@ func (p *Project) CreateProject() error {
 		return err
 	}
 
+	err = p.CreateFileWithInjection("/view/app", projectPath, "index.templ", "view/app")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+
 	err = p.CreatePath("/view/layout", projectPath)
 	if err != nil {
 		log.Printf("Error creating path: %s", projectPath)
@@ -403,118 +408,82 @@ func (p *Project) CreateProject() error {
 
 	// importing godotenv package (go get <godotenvPackage>)
 	err = utils.GoGetPackage(projectPath, godotenvPackage)
-	fmt.Println("GO GET GODOTENV TRY")
 	if err != nil {
 		log.Printf("Could not get go dependency %v\n", err)
-		fmt.Println("GO GET GODOTENV FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO GET GODOTENV SUCCESS")
 
-	fmt.Println("GO INSTALL TEMPL TRY")
 	err = utils.GoInstallPackage(projectPath, templInstallPackage)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
-		fmt.Println("GO INSTALL TEMPL FAILED")
-		cobra.CheckErr(err)
-	}
-	fmt.Println("GO INSTALL TEMPL SUCCESS")
-
-	err = utils.GoGetTempl(projectPath, templPackage)
-	if err != nil {
-		log.Printf("Could not get go dependency %v\n", err)
 		cobra.CheckErr(err)
 	}
 
-	fmt.Println("GO INSTALL AIR TRY")
 	err = utils.GoInstallPackage(projectPath, airPackage)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
-		fmt.Println("GO INSTALL AIR FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO INSTALL AIR SUCCESS")
 
-	fmt.Println("GO GET AIR TRY")
 	err = utils.GoGetPackage(projectPath, airPackage)
 	if err != nil {
 		log.Printf("Could not get go dependency %v\n", err)
-		fmt.Println("GO GET AIR FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO GET AIR SUCCESS")
 
 	err = utils.GoInstallPackage(projectPath, golangMigrateInstallPackage)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
-		fmt.Println("GO INSTALL GO-MIGRATE FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO INSTALL GO-MIGRATE SUCCESS")
 
 	err = utils.GoGetPackage(projectPath, golangMigratePackage)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
-		fmt.Println("GO GET GO-MIGRATE FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO GET GO-MIGRATE SUCCESS")
 
 	err = utils.GoGetPackage(projectPath, postgresDriverPackage)
 	if err != nil {
 		log.Printf("Could not get go dependency %v\n", err)
-		fmt.Println("GO GET pgDriver FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO GET pgDriver SUCCESS")
 
 	err = utils.GoGetPackage(projectPath, sessionPackage)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
-		fmt.Println("GO GET SESSION FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO GET SESSION SUCCESS")
 
 	err = utils.GoGetPackage(projectPath, supabasePackage)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
-		fmt.Println("GO GET SUPABASE FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO GET SUPABASE SUCCESS")
 
 	err = utils.GoGetPackage(projectPath, uuidPackage)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
-		fmt.Println("GO GET UUID FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO GET UUID SUCCESS")
 
 	err = utils.GoGetPackage(projectPath, bunPackage1)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
-		fmt.Println("GO GET BUN1 FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO GET BUN1 SUCCESS")
 
 	err = utils.GoGetPackage(projectPath, bunPackage2)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
-		fmt.Println("GO GET BUN2 FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO GET BUN2 SUCCESS")
 
 	err = utils.GoGetPackage(projectPath, bunPackage3)
 	if err != nil {
 		log.Printf("Could not install go dependency %v\n", err)
-		fmt.Println("GO GET BUN2 FAILED")
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO GET BUN3 SUCCESS")
 
 	err = utils.ExecuteCmd("git", []string{"init"}, projectPath)
 	if err != nil {
@@ -522,7 +491,6 @@ func (p *Project) CreateProject() error {
 		cobra.CheckErr(err)
 		return err
 	}
-	fmt.Println("GIT INIT SUCCESS")
 
 	err = utils.ExecuteCmd("npm", []string{"install", "-D", "tailwindcss"}, projectPath)
 	if err != nil {
@@ -530,7 +498,6 @@ func (p *Project) CreateProject() error {
 		cobra.CheckErr(err)
 		return err
 	}
-	fmt.Println("NPM TAILWIND SUCCESS")
 
 	err = utils.ExecuteCmd("npm", []string{"install", "-D", "daisyui@latest"}, projectPath)
 	if err != nil {
@@ -538,7 +505,6 @@ func (p *Project) CreateProject() error {
 		cobra.CheckErr(err)
 		return err
 	}
-	fmt.Println("NPM DAISYUI SUCCESS")
 
 	tailwindConfigFile, err := os.Create(filepath.Join(projectPath, "tailwind.config.js"))
 	if err != nil {
@@ -553,7 +519,6 @@ func (p *Project) CreateProject() error {
 		cobra.CheckErr(err)
 		return err
 	}
-	fmt.Println("NPM TAILWIND INIT")
 
 	tailwindConfigTemplate := template.Must(template.New("tailwind.config.js").Parse(string(myTemplate.TailwindConfigTemplate())))
 	err = tailwindConfigTemplate.Execute(tailwindConfigFile, p)
@@ -618,14 +583,13 @@ func (p *Project) CreateProject() error {
 		log.Printf("Could not go tidy in new project %v\n", err)
 		cobra.CheckErr(err)
 	}
-	fmt.Println("GO TIDY SUCCESS")
 
-	// err = utils.GoFmt(projectPath)
-	// if err != nil {
-	// 	log.Printf("Could not gofmt in new project %v\n", err)
-	// 	cobra.CheckErr(err)
-	// 	return err
-	// }
+	err = utils.ExecuteCmd("npx", []string{"tailwindcss", "-i", "view/css/app.css", "-o", "public/styles.css"}, projectPath)
+	if err != nil {
+		log.Printf("Error adding files to git repo: %v", err)
+		cobra.CheckErr(err)
+		return err
+	}
 
 	err = utils.ExecuteCmd("git", []string{"add", "."}, projectPath)
 	if err != nil {
@@ -633,23 +597,20 @@ func (p *Project) CreateProject() error {
 		cobra.CheckErr(err)
 		return err
 	}
-	fmt.Println("GIT ADD SUCCESS")
-
 	err = utils.ExecuteCmd("git", []string{"commit", "-m", "Initial commit"}, projectPath)
 	if err != nil {
 		log.Printf("Error committing files to git repo: %v", err)
 		cobra.CheckErr(err)
 		return err
 	}
-	fmt.Println("GIT COMMIT SUCCESS")
 
-	err = utils.ExecuteCmd("go", []string{"get", "github.com/a-h/templ"}, projectPath)
+	err = utils.ExecuteCmd("go", []string{"get", "-u", "github.com/a-h/templ"}, projectPath)
 	if err != nil {
 		log.Printf("Error committing files to git repo: %v", err)
 		cobra.CheckErr(err)
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -684,6 +645,9 @@ func (p *Project) CreateFileWithInjection(pathToCreate string, projectPath strin
 	case "handler/home":
 		createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.HandlerHome())))
 		err = createdTemplate.Execute(createdFile, p)
+	case "handler/app":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.HandlerApp())))
+		err = createdTemplate.Execute(createdFile, p)
 	case "handler/middleware":
 		createdTemplate := template.Must(template.New(fileName).Parse(string(p.FrameworkMap[p.ProjectType].templater.HandlerMiddleware())))
 		err = createdTemplate.Execute(createdFile, p)
@@ -717,6 +681,9 @@ func (p *Project) CreateFileWithInjection(pathToCreate string, projectPath strin
 	case "pkg/sb":
 		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.SupabaseTemplate())))
 		err = createdTemplate.Execute(createdFile, p)
+	case "pkg/util":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.PkgUtilTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
 	case "view/util":
 		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewUtilTemplate())))
 		err = createdTemplate.Execute(createdFile, p)
@@ -728,6 +695,9 @@ func (p *Project) CreateFileWithInjection(pathToCreate string, projectPath strin
 		err = createdTemplate.Execute(createdFile, p)
 	case "view/home":
 		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewHomeTemplate())))
+		err = createdTemplate.Execute(createdFile, p)
+	case "view/app":
+		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewAppTemplate())))
 		err = createdTemplate.Execute(createdFile, p)
 	case "view/layout":
 		createdTemplate := template.Must(template.New(fileName).Parse(string(myTemplate.ViewLayoutTemplate())))

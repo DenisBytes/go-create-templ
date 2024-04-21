@@ -16,6 +16,9 @@ var viewCssTemplate []byte
 //go:embed files/view/home/index.go.tmpl
 var viewHomeTemplate []byte
 
+//go:embed files/view/app/index.go.tmpl
+var viewAppTemplate []byte
+
 //go:embed files/view/layout/layout.go.tmpl
 var viewLayoutTemplate []byte
 
@@ -58,4 +61,8 @@ func ViewNavigationTemplate() []byte {
 
 func ViewToastTemplate() []byte {
 	return viewToastTemplate
+}
+
+func ViewAppTemplate() []byte{
+	return viewAppTemplate
 }

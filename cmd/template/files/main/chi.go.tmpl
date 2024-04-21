@@ -14,6 +14,18 @@ import (
 	"github.com/joho/godotenv"
 )
 
+
+/*
+	TODO: 
+	1)fill the empty environment variables in .env
+	2)complete the TODO in /pkg/sb/supabase.go
+	3)go to your Supabase Project, go to Authentication, 
+		then go to URL Configuration and change the Site Url to
+		"http://localhost:3000/auth/callback"
+	4)go on supabase -> Authentication -> Providers and follow the instructions for <chosen_provider> login
+
+*/
+
 //go:embed public/*
 var FS embed.FS
 
@@ -46,6 +58,7 @@ func main() {
 		auth.Use(handler.WithAuth, handler.WithAccountSetup)
 		auth.Get("/settings", handler.MakeHandler(handler.HandleSettingsIndex))
 		auth.Put("/settings/account/profile", handler.MakeHandler(handler.HandleSettingsUsernameUpdate))
+		auth.Get("/app", handler.MakeHandler(handler.HandleAppIndex))
 	})
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")

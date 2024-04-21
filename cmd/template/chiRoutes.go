@@ -13,6 +13,9 @@ var chiHandlerAuth []byte
 //go:embed files/handlers/chi/home.go.tmpl
 var chiHandlerHome []byte
 
+//go:embed files/handlers/chi/app.go.tmpl
+var chiHandlerApp []byte
+
 //go:embed files/handlers/chi/middleware.go.tmpl
 var chiHandlerMiddleware []byte
 
@@ -34,6 +37,10 @@ func (c ChiTemplates) HandlerAuth() []byte {
 
 func (c ChiTemplates) HandlerHome() []byte {
 	return chiHandlerHome
+}
+
+func (c ChiTemplates) HandlerApp() []byte{
+	return chiHandlerApp
 }
 
 func (c ChiTemplates) HandlerMiddleware() []byte {
