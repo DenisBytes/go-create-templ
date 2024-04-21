@@ -643,6 +643,13 @@ func (p *Project) CreateProject() error {
 	}
 	fmt.Println("GIT COMMIT SUCCESS")
 
+	err = utils.ExecuteCmd("go", []string{"get", "github.com/a-h/templ"}, projectPath)
+	if err != nil {
+		log.Printf("Error committing files to git repo: %v", err)
+		cobra.CheckErr(err)
+		return err
+	}
+	
 	return nil
 }
 
