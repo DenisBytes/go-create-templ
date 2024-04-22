@@ -79,6 +79,14 @@ const (
 	validatePath     = "/pkg/validate"
 	sbPath           = "/pkg/sb"
 	pkgUtilPath      = "/pkg/util"
+	viewPath         = "/view"
+	viewAppPath      = "/view/app"
+	viewAuthPath     = "/view/auth"
+	viewCssPath      = "/view/css"
+	viewHomePath     = "/view/home"
+	viewLayoutPath   = "/view/layout"
+	viewSettingsPath = "/view/settings"
+	viewUIPath       = "/view/ui"
 )
 
 func (p *Project) createFrameworkMap() {
@@ -302,105 +310,111 @@ func (p *Project) CreateProject() error {
 		return err
 	}
 
-	err = p.CreatePath("/view", projectPath)
+	err = p.CreatePath(viewPath, projectPath)
 	if err != nil {
 		log.Printf("Error creating path: %s", projectPath)
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/view", projectPath, "util.go", "view/util")
+	err = p.CreateFileWithInjection(viewPath, projectPath, "util.go", "view/util")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreatePath("/view/auth", projectPath)
-	if err != nil {
-		log.Printf("Error creating path: %s", projectPath)
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/view/auth", projectPath, "auth.templ", "view/auth")
-	if err != nil {
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreatePath("/view/css", projectPath)
+	err = p.CreatePath(viewAuthPath, projectPath)
 	if err != nil {
 		log.Printf("Error creating path: %s", projectPath)
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/view/css", projectPath, "app.css", "view/css")
+	err = p.CreateFileWithInjection(viewAuthPath, projectPath, "auth.templ", "view/auth")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreatePath("/view/home", projectPath)
-	if err != nil {
-		log.Printf("Error creating path: %s", projectPath)
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/view/home", projectPath, "index.templ", "view/home")
-	if err != nil {
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/view/app", projectPath, "index.templ", "view/app")
-	if err != nil {
-		cobra.CheckErr(err)
-		return err
-	}
-
-
-	err = p.CreatePath("/view/layout", projectPath)
+	err = p.CreatePath(viewCssPath, projectPath)
 	if err != nil {
 		log.Printf("Error creating path: %s", projectPath)
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/view/layout", projectPath, "app.templ", "view/layout")
+	err = p.CreateFileWithInjection(viewCssPath, projectPath, "app.css", "view/css")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreatePath("/view/settings", projectPath)
-	if err != nil {
-		log.Printf("Error creating path: %s", projectPath)
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreateFileWithInjection("/view/settings", projectPath, "account.templ", "view/settings")
-	if err != nil {
-		cobra.CheckErr(err)
-		return err
-	}
-
-	err = p.CreatePath("/view/ui", projectPath)
+	err = p.CreatePath(viewHomePath, projectPath)
 	if err != nil {
 		log.Printf("Error creating path: %s", projectPath)
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/view/ui", projectPath, "navigation.templ", "view/ui/navigation")
+	err = p.CreateFileWithInjection(viewHomePath, projectPath, "index.templ", "view/home")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err
 	}
 
-	err = p.CreateFileWithInjection("/view/ui", projectPath, "toast.templ", "view/ui/toast")
+	err = p.CreatePath(viewAppPath, projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(viewAppPath, projectPath, "index.templ", "view/app")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath(viewLayoutPath, projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(viewLayoutPath, projectPath, "app.templ", "view/layout")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath(viewSettingsPath, projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(viewSettingsPath, projectPath, "account.templ", "view/settings")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreatePath(viewUIPath, projectPath)
+	if err != nil {
+		log.Printf("Error creating path: %s", projectPath)
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(viewUIPath, projectPath, "navigation.templ", "view/ui/navigation")
+	if err != nil {
+		cobra.CheckErr(err)
+		return err
+	}
+
+	err = p.CreateFileWithInjection(viewUIPath, projectPath, "toast.templ", "view/ui/toast")
 	if err != nil {
 		cobra.CheckErr(err)
 		return err

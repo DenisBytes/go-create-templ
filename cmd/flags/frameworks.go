@@ -10,9 +10,9 @@ type Framework string
 const (
 	Chi             Framework = "chi"
 	Gin             Framework = "gin"
+	Echo            Framework = "echo"
 	Fiber           Framework = "fiber"
 	StandardLibrary Framework = "standard-library"
-	Echo            Framework = "echo"
 )
 
 var AllowedProjectTypes = []string{string(Chi), string(Gin), string(Fiber), string(StandardLibrary), string(Echo)}
