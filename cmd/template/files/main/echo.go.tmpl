@@ -1,0 +1,70 @@
+package main
+
+import (
+	"embed"
+	"log"
+	"net/http"
+	"os"
+
+	"{{.ProjectName}}/db"
+	"{{.ProjectName}}/handler"
+	"{{.ProjectName}}/pkg/sb"
+	"github.com/labstack/echo/v4"
+    "github.com/labstack/echo/v4/middleware"
+	"github.com/joho/godotenv"
+)
+
+//go:embed public/*
+var FS embed.FS
+
+func main() {
+	if err := initEnvVar(); err != nil {
+		log.Fatal("Init err: ", err)
+	}
+
+	e := echo.New()
+
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+	e.Use(handler.WithUser)
+
+	// Handler for static files
+	e.GET("/*", echo.WrapHandler(http.FileServer(http.FS(FS))))
+
+	// Routes
+	e.GET("/", handler.MakeHandler(handler.HandleHomeIndex))
+	e.GET("/login", handler.MakeHandler(handler.HandleLogInIndex))
+	e.GET("/login/provider/github",handler.MakeHandler(handler.HandleLoginWithGithubPost))
+	e.POST("/login", handler.MakeHandler(handler.HandleLoginPost))
+	e.GET("/auth/callback", handler.MakeHandler(handler.HandleAuthCallback))
+	e.POST("/logout", handler.MakeHandler(handler.HandleLogoutPost))
+
+	// Group with WithAuth middleware
+	authGroup := e.Group("/")
+	authGroup.Use(handler.WithAuth)
+	authGroup.GET("/account/setup", handler.MakeHandler(handler.HandleAccountSetupIndex))
+	authGroup.POST("/account/setup", handler.MakeHandler(handler.HandleAccountSetupPost))
+
+	// Group with WithAuth and WithAccountSetup middleware
+	authAccountSetupGroup := e.Group("/")
+	authAccountSetupGroup.Use(handler.WithAuth, handler.WithAccountSetup)
+	authAccountSetupGroup.GET("/settings", handler.MakeHandler(handler.HandleSettingsIndex))
+	authAccountSetupGroup.PUT("/settings/account/profile", handler.MakeHandler(handler.HandleSettingsUsernameUpdate))
+	authAccountSetupGroup.GET("/app", handler.MakeHandler(handler.HandleAppIndex))
+
+	port := os.Getenv("HTTP_LISTEN_ADDR")
+	log.Printf("application running on port %s", port)
+	log.Fatal(e.Start(port))
+}
+
+func initEnvVar() error {
+	if err := godotenv.Load(); err != nil {
+		return err
+	}
+	if err := db.Init(); err != nil {
+		return err
+	}
+	return sb.Init()
+}

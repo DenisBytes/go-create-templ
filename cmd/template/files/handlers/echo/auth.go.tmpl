@@ -1,0 +1,109 @@
+package handler
+
+import (
+	"log/slog"
+	"net/http"
+	"os"
+
+	"{{.ProjectName}}/db"
+	"{{.ProjectName}}/pkg/validate"
+	"{{.ProjectName}}/pkg/sb"
+	"{{.ProjectName}}/types"
+	"{{.ProjectName}}/view/auth"
+	"github.com/gorilla/sessions"
+	"github.com/nedpals/supabase-go"
+    "github.com/labstack/echo/v4"
+
+)
+
+const (
+	sessionUserKey        = "user"
+	sessionAccessTokenKey = "accessToken"
+)
+
+func HandleLogInIndex(c echo.Context) error {
+	return auth.Login().Render(c.Request().Context(), c.Response().Writer)
+}
+
+func HandleLoginPost(c echo.Context) error {
+	credentials := supabase.UserCredentials{
+		Email: c.Request().FormValue("email"),
+	}
+	err := sb.Client.Auth.SendMagicLink(c.Request().Context(), credentials.Email)
+	if err != nil {
+		slog.Error("login error", "err", err)
+		return auth.LoginForm(credentials, auth.LoginErrors{
+			InvalidCredentials: err.Error(),
+		}).Render(c.Request().Context(), c.Response().Writer)
+	}
+	return auth.MagicLinkSuccess(credentials.Email).Render(c.Request().Context(), c.Response().Writer)
+}
+
+func HandleAuthCallback(c echo.Context) error {
+	accessToken := c.QueryParam("access_token")
+	if len(accessToken) == 0 {
+		return auth.CallbackScript().Render(c.Request().Context(), c.Response().Writer)
+	}
+	if err := setAuthSession(c, accessToken); err != nil {
+		return err
+	}
+
+	c.Redirect(http.StatusSeeOther, "/")
+    return nil
+}
+
+func setAuthSession(c echo.Context, accessToken string) error {
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	session, _ := store.Get(c.Request(), "user")
+	session.Values["accessToken"] = accessToken
+	return session.Save(c.Request(), c.Response().Writer)
+}
+
+func HandleLogoutPost(c echo.Context) error {
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	session, _ := store.Get(c.Request(), "user")
+	session.Values["accessToken"] = ""
+	session.Save(c.Request(), c.Response().Writer)
+
+	c.Redirect(http.StatusSeeOther, "/login")
+	return nil
+}
+
+func HandleLoginWithGithubPost(c echo.Context) error {
+	resp, err := sb.Client.Auth.SignInWithProvider(supabase.ProviderSignInOptions{
+		Provider:   "github",
+		RedirectTo: "http://localhost:3000/auth/callback",
+	})
+	if err != nil {
+		return err
+	}
+
+	c.Redirect(http.StatusSeeOther, resp.URL)
+	return nil
+}
+
+func HandleAccountSetupIndex(c echo.Context) error {
+	return auth.AccountSetup().Render(c.Request().Context(), c.Response().Writer)
+}
+
+func HandleAccountSetupPost(c echo.Context) error {
+	params := auth.AccountSetupParams{
+		Username: c.Request().FormValue("username"),
+	}
+	var errors auth.AccountSetupErrors
+	ok := validate.New(&params, validate.Fields{
+		"Username": validate.Rules(validate.Min(2), validate.Max(50)),
+	}).Validate(&errors)
+	if !ok {
+		return auth.AccountSetupForm(params, errors).Render(c.Request().Context(), c.Response().Writer)
+	}
+	user := GetAuthenticatedUser(c)
+	account := types.Account{
+		UserID:   user.ID,
+		Username: params.Username,
+	}
+	if err := db.CreateAccount(&account); err != nil {
+		return err
+	}
+	return hxRedirect(c, "/")
+}
