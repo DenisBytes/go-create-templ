@@ -137,7 +137,6 @@ var createCmd = &cobra.Command{
 				}
 			}
 		}()
-		fmt.Println(project.ProjectName, project.ProjectType)
 
 		err = project.CreateProject()
 		if err != nil {

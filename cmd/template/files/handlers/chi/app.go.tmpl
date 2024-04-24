@@ -1,15 +1,11 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 
 	"{{.ProjectName}}/view/app"
 )
 
 func HandleAppIndex(w http.ResponseWriter, r *http.Request) error {
-	user := GetAuthenticatedUser(r)
-
 	return home.Index().Render(r.Context(), w)
 }
