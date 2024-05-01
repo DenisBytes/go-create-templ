@@ -1,0 +1,10 @@
+package handler
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"{{.ProjectName}}/view/home"
+)
+
+func HandleHomeIndex(c *fiber.Ctx) error {
+	return home.Index().Render(c.Context(), c)
+}

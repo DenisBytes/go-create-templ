@@ -115,10 +115,10 @@ func (p *Project) createFrameworkMap() {
 	// 	templater:   myTemplate.GinTemplates{},
 	// }
 
-	// p.FrameworkMap[flags.Fiber] = Framework{
-	// 	packageName: fiberPackage,
-	// 	templater:   myTemplate.FiberTemplates{},
-	// }
+	p.FrameworkMap[flags.Fiber] = Framework{
+		packageName: fiberPackage,
+		templater:   myTemplate.FiberTemplates{},
+	}
 }
 
 func (p *Project) CreateProject() error {

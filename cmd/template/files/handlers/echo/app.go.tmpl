@@ -6,5 +6,5 @@ import (
 )
 
 func HandleAppIndex(c echo.Context) error {
-	return home.Index().Render(c.Request().Context(), c.Response().Writer)
+	return app.Index().Render(c.Request().Context(), c.Response().Writer)
 }
