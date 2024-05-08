@@ -1,0 +1,64 @@
+package main
+
+import (
+	"embed"
+	"log"
+	"log/slog"
+	"os"
+
+	"{{.ProjectName}}/db"
+	"{{.ProjectName}}/handler"
+	"{{.ProjectName}}/pkg/sb"
+	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
+)
+
+//go:embed public/*
+var FS embed.FS
+
+func main() {
+	if err := initEnvVar(); err!= nil {
+		log.Fatal("Init err: ", err)
+	}
+
+	app := fiber.New()
+
+	app.Use(handler.WithUser)
+
+	// Handler for static files
+	app.Static("/", "./public")
+
+	app.Get("/", handler.MakeHandler(handler.HandleHomeIndex))
+	app.Get("/login", handler.MakeHandler(handler.HandleLogInIndex))
+	app.Get("/login/provider/github", handler.MakeHandler(handler.HandleLoginWithGithubPost))
+	app.Post("/login", handler.MakeHandler(handler.HandleLoginPost))
+	app.Get("/auth/callback", handler.MakeHandler(handler.HandleAuthCallback))
+	app.Post("/logout", handler.MakeHandler(handler.HandleLogoutPost))
+
+	app.Group("/account/setup", func() {
+		app.Use(handler.WithAuth)
+		app.Get("", handler.MakeHandler(handler.HandleAccountSetupIndex))
+		app.Post("", handler.MakeHandler(handler.HandleAccountSetupPost))
+	})
+
+	app.Group("/", func() {
+		app.Use(handler.WithAuth, handler.WithAccountSetup)
+		app.Get("/settings", handler.MakeHandler(handler.HandleSettingsIndex))
+		app.Put("/settings/account/profile", handler.MakeHandler(handler.HandleSettingsUsernameUpdate))
+		app.Get("/app", handler.MakeHandler(handler.HandleAppIndex))
+	})
+
+	port := os.Getenv("HTTP_LISTEN_ADDR")
+	slog.Info("application running", "port", port)
+	log.Fatal(app.Listen(port))
+}
+
+func initEnvVar() error {
+	if err := godotenv.Load(); err != nil {
+		return err
+	}
+	if err := db.Init(); err != nil {
+		return err
+	}
+	return sb.Init()
+}

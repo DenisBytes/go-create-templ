@@ -10,6 +10,7 @@ import (
 	"{{.ProjectName}}/pkg/sb"
 	"{{.ProjectName}}/types"
 	"{{.ProjectName}}/view/auth"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gorilla/sessions"
 	"github.com/nedpals/supabase-go"
 )
@@ -19,53 +20,53 @@ const (
 	sessionAccessTokenKey = "accessToken"
 )
 
-func HandleLogInIndex(w http.ResponseWriter, r *http.Request) error {
-	return auth.Login().Render(r.Context(), w)
+func HandleLogInIndex(c *fiber.Ctx) error {
+	return auth.Login().Render(c.Context(), c.Response().BodyWriter())
 }
 
-func HandleLoginPost(w http.ResponseWriter, r *http.Request) error {
+func HandleLoginPost(c *fiber.Ctx) error {
 	credentials := supabase.UserCredentials{
-		Email: r.FormValue("email"),
+		Email: c.FormValue("email"),
 	}
-	err := sb.Client.Auth.SendMagicLink(r.Context(), credentials.Email)
+	err := sb.Client.Auth.SendMagicLink(c.Context(), credentials.Email)
 	if err != nil {
 		slog.Error("login error", "err", err)
 		return auth.LoginForm(credentials, auth.LoginErrors{
 			InvalidCredentials: err.Error(),
-		}).Render(r.Context(), w)
+		}).Render(c.Context(), c.Response().BodyWriter())
 	}
-	return auth.MagicLinkSuccess(credentials.Email).Render(r.Context(), w)
+	return auth.MagicLinkSuccess(credentials.Email).Render(c.Context(), c.Response().BodyWriter())
 }
 
-func HandleAuthCallback(w http.ResponseWriter, r *http.Request) error {
-	accessToken := r.URL.Query().Get("access_token")
+func HandleAuthCallback(c *fiber.Ctx) error {
+	accessToken := c.Query("access_token")
 	if len(accessToken) == 0 {
-		return auth.CallbackScript().Render(r.Context(), w)
+		return auth.CallbackScript().Render(c.Context(), c.Response().BodyWriter())
 	}
-	if err := setAuthSession(w, r, accessToken); err != nil {
+	if err := setAuthSession(c, accessToken); err != nil {
 		return err
 	}
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	c.Redirect("/", http.StatusSeeOther)
 	return nil
 }
 
-func setAuthSession(w http.ResponseWriter, r *http.Request, accessToken string) error {
+func setAuthSession(c *fiber.Ctx, accessToken string) error {
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
-	session, _ := store.Get(r, "user")
+	session, _ := store.Get(c.Request, "user")
 	session.Values["accessToken"] = accessToken
-	return session.Save(r, w)
+	return session.Save(c.Request, c.Response().BodyWriter())
 }
 
-func HandleLogoutPost(w http.ResponseWriter, r *http.Request) error {
+func HandleLogoutPost(c *fiber.Ctx) error {
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
-	session, _ := store.Get(r, "user")
+	session, _ := store.Get(c.Request, "user")
 	session.Values["accessToken"] = ""
-	session.Save(r, w)
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	session.Save(c.Request, c.Response().BodyWriter())
+	c.Redirect("/login", http.StatusSeeOther)
 	return nil
 }
 
-func HandleLoginWithGithubPost(w http.ResponseWriter, r *http.Request) error {
+func HandleLoginWithGithubPost(c *fiber.Ctx) error {
 	resp, err := sb.Client.Auth.SignInWithProvider(supabase.ProviderSignInOptions{
 		Provider:   "github",
 		RedirectTo: "http://localhost:3000/auth/callback",
@@ -73,26 +74,26 @@ func HandleLoginWithGithubPost(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	http.Redirect(w, r, resp.URL, http.StatusSeeOther)
+	c.Redirect(resp.URL, http.StatusSeeOther)
 	return nil
 }
 
-func HandleAccountSetupIndex(w http.ResponseWriter, r *http.Request) error {
-	return auth.AccountSetup().Render(r.Context(), w)
+func HandleAccountSetupIndex(c *fiber.Ctx) error {
+	return auth.AccountSetup().Render(c.Context(), c.Response().BodyWriter())
 }
 
-func HandleAccountSetupPost(w http.ResponseWriter, r *http.Request) error {
+func HandleAccountSetupPost(c *fiber.Ctx) error {
 	params := auth.AccountSetupParams{
-		Username: r.FormValue("username"),
+		Username: c.FormValue("username"),
 	}
 	var errors auth.AccountSetupErrors
 	ok := validate.New(&params, validate.Fields{
 		"Username": validate.Rules(validate.Min(2), validate.Max(50)),
 	}).Validate(&errors)
 	if !ok {
-		return auth.AccountSetupForm(params, errors).Render(r.Context(), w)
+		return auth.AccountSetupForm(params, errors).Render(c.Context(), c.Response().BodyWriter())
 	}
-	user := GetAuthenticatedUser(r)
+	user := GetAuthenticatedUser(c)
 	account := types.Account{
 		UserID:   user.ID,
 		Username: params.Username,
@@ -100,5 +101,5 @@ func HandleAccountSetupPost(w http.ResponseWriter, r *http.Request) error {
 	if err := db.CreateAccount(&account); err != nil {
 		return err
 	}
-	return hxRedirect(w, r, "/")
+	return hxRedirect(c, "/")
 }

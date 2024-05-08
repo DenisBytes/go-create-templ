@@ -1,35 +1,34 @@
 package handler
 
 import (
-	"net/http"
-
 	"{{.ProjectName}}/db"
 	"{{.ProjectName}}/pkg/validate"
 	"{{.ProjectName}}/view/settings"
+	"github.com/gofiber/fiber/v2"
 )
 
-func HandleSettingsIndex(w http.ResponseWriter, r *http.Request) error {
-	user := GetAuthenticatedUser(r)
-	return settings.Index(user).Render(r.Context(), w)
+func HandleSettingsIndex(c *fiber.Ctx) error {
+	user := GetAuthenticatedUser(c)
+	return settings.Index(user).Render(c.Context(), c.Response().BodyWriter())
 }
 
-func HandleSettingsUsernameUpdate(w http.ResponseWriter, r *http.Request) error {
+func HandleSettingsUsernameUpdate(c *fiber.Ctx) error {
 	params := settings.ProfileParams{
-		Username: r.FormValue("username"),
+		Username: c.FormValue("username"),
 	}
 	errors := settings.ProfileErrors{}
 	ok := validate.New(&params, validate.Fields{
 		"Username": validate.Rules(validate.Min(3), validate.Max(40)),
 	}).Validate(&errors)
 	if !ok {
-		return settings.ProfileForm(params, errors).Render(r.Context(), w)
+		return settings.ProfileForm(params, errors).Render(c.Context(), c.Response().BodyWriter())
 	}
 
-	user := GetAuthenticatedUser(r)
+	user := GetAuthenticatedUser(c)
 	user.Account.Username = params.Username
 	if err := db.UpdateAccount(&user.Account); err != nil {
 		return err
 	}
 	params.Success = true
-	return settings.ProfileForm(params, settings.ProfileErrors{}).Render(r.Context(), w)
+	return settings.ProfileForm(params, settings.ProfileErrors{}).Render(c.Context(), c.Response().BodyWriter())
 }

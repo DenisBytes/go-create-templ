@@ -6,5 +6,5 @@ import (
 )
 
 func HandleHomeIndex(c *fiber.Ctx) error {
-	return home.Index().Render(c.Context(), c)
+	return home.Index().Render(c.Context(), c.Response().BodyWriter())
 }

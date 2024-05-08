@@ -6,5 +6,5 @@ import (
 )
 
 func HandleAppIndex(c *fiber.Ctx) error {
-	return app.Index().Render(c.Context(), c)
+	return app.Index().Render(c.Context(), c.Response().BodyWriter())
 }

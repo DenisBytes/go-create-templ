@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/gofiber/fiber/v2"
 	"{{.ProjectName}}/db"
 	"{{.ProjectName}}/pkg/sb"
 	"{{.ProjectName}}/types"
@@ -15,73 +15,61 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-func WithAuth(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.URL.Path, "/public") {
-			next.ServeHTTP(w, r)
-			return
+func WithAuth(next fiber.Handler) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if strings.Contains(c.Path(), "/public") {
+			return next(c)
 		}
-		user := GetAuthenticatedUser(r)
+		user := GetAuthenticatedUser(c)
 		if !user.LoggedIn {
-			path := r.URL.Path
-			http.Redirect(w, r, "/login?to="+path, http.StatusSeeOther)
-			return
+			path := c.Path()
+			return c.Redirect("/login?to="+path, http.StatusSeeOther)
 		}
-		next.ServeHTTP(w, r)
+		return next(c)
 	}
-	return http.HandlerFunc(fn)
 }
 
-func WithAccountSetup(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		user := GetAuthenticatedUser(r)
+func WithAccountSetup(next fiber.Handler) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user := GetAuthenticatedUser(c)
 		account, err := db.GetAccountByUserID(user.ID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				http.Redirect(w, r, "/account/setup", http.StatusSeeOther)
-				return
+				return c.Redirect("/account/setup", http.StatusSeeOther)
 			}
-			next.ServeHTTP(w, r)
-			return
+			return next(c)
 		}
 		user.Account = account
-		ctx := context.WithValue(r.Context(), types.UserContextKey, user)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		c.Set(types.UserContextKey, user)
+		return next(c)
 	}
-	return http.HandlerFunc(fn)
 }
 
-func WithUser(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.URL.Path, "/public") {
-			next.ServeHTTP(w, r)
-			return
+func WithUser(next fiber.Handler) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if strings.Contains(c.Path(), "/public") {
+			return next(c)
 		}
 		store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
-		session, err := store.Get(r, sessionUserKey)
+		session, err := store.Get(c.Request(), sessionUserKey)
 		if err != nil {
-			next.ServeHTTP(w, r)
-			return
+			return next(c)
 		}
-		accessToken := session.Values[sessionAccessTokenKey]
-		if accessToken == nil {
-			next.ServeHTTP(w, r)
-			return
+		accessToken, ok := session.Values[sessionAccessTokenKey].(string)
+		if !ok {
+			return next(c)
 		}
-		resp, err := sb.Client.Auth.User(r.Context(), accessToken.(string))
+		resp, err := sb.Client.Auth.User(c.Context(), accessToken)
 		if err != nil {
-			next.ServeHTTP(w, r)
-			return
+			return next(c)
 		}
 		user := types.AuthenticatedUser{
 			ID:          uuid.MustParse(resp.ID),
 			Email:       resp.Email,
 			LoggedIn:    true,
-			AccessToken: accessToken.(string),
+			AccessToken: accessToken,
 		}
-		ctx := context.WithValue(r.Context(), types.UserContextKey, user)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		c.Set(types.UserContextKey, user)
+		return next(c)
 	}
-	return http.HandlerFunc(fn)
 }
-

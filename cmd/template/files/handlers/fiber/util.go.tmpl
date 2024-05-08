@@ -1,34 +1,34 @@
 package handler
 
 import (
-	"log/slog"
 	"net/http"
-
+	"log"
+	"github.com/gofiber/fiber/v2"
 	"{{.ProjectName}}/types"
 )
 
-func MakeHandler(h func(http.ResponseWriter, *http.Request) error) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := h(w, r); err != nil {
-			slog.Error("interanl server error", "err", err, "path", r.URL.Path)
+func MakeHandler(h func(*fiber.Ctx) error) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if err := h(c); err!= nil {
+			log.Printf("internal server error: %v, path: %s", err, c.Path())
 		}
+		return nil
 	}
 }
-
-func GetAuthenticatedUser(r *http.Request) types.AuthenticatedUser {
-	user, ok := r.Context().Value(types.UserContextKey).(types.AuthenticatedUser)
-	if !ok {
+func GetAuthenticatedUser(c *fiber.Ctx) types.AuthenticatedUser {
+	user, ok := c.Locals(types.UserContextKey).(types.AuthenticatedUser)
+	if!ok {
 		return types.AuthenticatedUser{}
 	}
 	return user
 }
 
-func hxRedirect(w http.ResponseWriter, r *http.Request, to string) error {
-	if len(r.Header.Get("HX-Request")) > 0 {
-		w.Header().Set("HX-Redirect", to)
-		w.WriteHeader(http.StatusSeeOther)
+
+func hxRedirect(c *fiber.Ctx, to string) error {
+	if len(c.Get("HX-Request")) > 0 {
+		c.Set("HX-Redirect", to)
+		c.Response().SetStatusCode(http.StatusSeeOther)
 		return nil
 	}
-	http.Redirect(w, r, to, http.StatusSeeOther)
-	return nil
+	return  c.Redirect(to, http.StatusSeeOther)
 }

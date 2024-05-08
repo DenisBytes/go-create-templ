@@ -7,5 +7,5 @@ import (
 )
 
 func HandleAppIndex(w http.ResponseWriter, r *http.Request) error {
-	return home.Index().Render(r.Context(), w)
+	return app.Index().Render(r.Context(), w)
 }
