@@ -110,10 +110,10 @@ func (p *Project) createFrameworkMap() {
 	// 	templater:   myTemplate.StandardLibTemplate{},
 	// }
 
-	// p.FrameworkMap[flags.Gin] = Framework{
-	// 	packageName: ginPackage,
-	// 	templater:   myTemplate.GinTemplates{},
-	// }
+	p.FrameworkMap[flags.Gin] = Framework{
+		packageName: ginPackage,
+		templater:   myTemplate.GinTemplates{},
+	}
 
 	p.FrameworkMap[flags.Fiber] = Framework{
 		packageName: fiberPackage,

@@ -1,0 +1,11 @@
+package handler
+
+import (
+
+	"github.com/gin-gonic/gin"
+	"{{.ProjectName}}/view/app"
+)
+
+func HandleAppIndex(c *gin.Context) error {
+	return app.Index().Render(c.Request.Context(), c.Writer)
+}

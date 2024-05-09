@@ -35,10 +35,10 @@ func main() {
 	app.Get("/auth/callback", handler.MakeHandler(handler.HandleAuthCallback))
 	app.Post("/logout", handler.MakeHandler(handler.HandleLogoutPost))
 
-	app.Group("/account/setup", func() {
+	app.Group("/", func() {
 		app.Use(handler.WithAuth)
-		app.Get("", handler.MakeHandler(handler.HandleAccountSetupIndex))
-		app.Post("", handler.MakeHandler(handler.HandleAccountSetupPost))
+		app.Get("/account/setup", handler.MakeHandler(handler.HandleAccountSetupIndex))
+		app.Post("/account/setup", handler.MakeHandler(handler.HandleAccountSetupPost))
 	})
 
 	app.Group("/", func() {

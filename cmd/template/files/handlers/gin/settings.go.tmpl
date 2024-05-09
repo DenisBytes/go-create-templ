@@ -1,0 +1,34 @@
+package handler
+
+import (
+	"{{.ProjectName}}/db"
+	"{{.ProjectName}}/pkg/validate"
+	"{{.ProjectName}}/view/settings"
+	"github.com/gin-gonic/gin"
+)
+
+func HandleSettingsIndex(c *gin.Context) error {
+	user := GetAuthenticatedUser(c)
+	return settings.Index(user).Render(c.Request.Context(), c.Writer)
+}
+
+func HandleSettingsUsernameUpdate(c *gin.Context) error {
+	params := settings.ProfileParams{
+		Username: c.Request.FormValue("username"),
+	}
+	errors := settings.ProfileErrors{}
+	ok := validate.New(&params, validate.Fields{
+		"Username": validate.Rules(validate.Min(3), validate.Max(40)),
+	}).Validate(&errors)
+	if !ok {
+		return settings.ProfileForm(params, errors).Render(c.Request.Context(), c.Writer)
+	}
+
+	user := GetAuthenticatedUser(c)
+	user.Account.Username = params.Username
+	if err := db.UpdateAccount(&user.Account); err != nil {
+		return err
+	}
+	params.Success = true
+	return settings.ProfileForm(params, settings.ProfileErrors{}).Render(c.Request.Context(), c.Writer)
+}

@@ -1,0 +1,83 @@
+package handler
+
+import (
+	"database/sql"
+	"errors"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+	"{{.ProjectName}}/db"
+	"{{.ProjectName}}/pkg/sb"
+	"{{.ProjectName}}/types"
+	"github.com/google/uuid"
+	"github.com/gorilla/sessions"
+)
+
+func WithAuth(next gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if strings.Contains(c.Request.URL.Path, "/public") {
+			next(c)
+			return
+		}
+		user := GetAuthenticatedUser(c)
+		if!user.LoggedIn {
+			path := c.Request.URL.Path
+			c.Redirect(http.StatusSeeOther, "/login?to="+path)
+			return
+		}
+		next(c)
+	}
+}
+
+func WithAccountSetup(next gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := GetAuthenticatedUser(c)
+		account, err := db.GetAccountByUserID(user.ID)
+		if err!= nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				c.Redirect(http.StatusSeeOther, "/account/setup")
+				return
+			}
+			next(c)
+			return
+		}
+		user.Account = account
+		c.Set(types.UserContextKey, user)
+		next(c)
+	}
+}
+
+func WithUser(next gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if strings.Contains(c.Request.URL.Path, "/public") {
+			next(c)
+			return
+		}
+		store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+		session, err := store.Get(c.Request, sessionUserKey)
+		if err!= nil {
+			next(c)
+			return
+		}
+		accessToken, ok := session.Values[sessionAccessTokenKey].(string)
+		if!ok {
+			next(c)
+			return
+		}
+		resp, err := sb.Client.Auth.User(c.Request.Context(), accessToken)
+		if err!= nil {
+			next(c)
+			return
+		}
+		user := types.AuthenticatedUser{
+			ID:          uuid.MustParse(resp.ID),
+			Email:       resp.Email,
+			LoggedIn:    true,
+			AccessToken: accessToken,
+		}
+		c.Set(types.UserContextKey, user)
+		next(c)
+	}
+}

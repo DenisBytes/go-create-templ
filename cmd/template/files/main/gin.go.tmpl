@@ -1,0 +1,65 @@
+package main
+
+import (
+	"embed"
+	"log"
+	"log/slog"
+	"net/http"
+	"os"
+
+	"{{.ProjectName}}/db"
+	"{{.ProjectName}}/handler"
+	"{{.ProjectName}}/pkg/sb"
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+)
+
+//go:embed public/*
+var FS embed.FS
+
+func main() {
+	if err := initEnvVar(); err!= nil {
+		log.Fatal("Init err: ", err)
+	}
+
+	router := gin.Default()
+
+	router.Use(handler.WithUser)
+
+	// Handler for static files
+	router.Static("/*", FS)
+
+	router.GET("/", handler.MakeHandler(handler.HandleHomeIndex))
+	router.GET("/login", handler.MakeHandler(handler.HandleLogInIndex))
+	router.GET("/login/provider/github", handler.MakeHandler(handler.HandleLoginWithGithubPost))
+	router.POST("/login", handler.MakeHandler(handler.HandleLoginPost))
+	router.GET("/auth/callback", handler.MakeHandler(handler.HandleAuthCallback))
+	router.POST("/logout", handler.MakeHandler(handler.HandleLogoutPost))
+
+	router.Group(func(g *gin.Group) {
+		g.Use(handler.WithAuth)
+		g.GET("/account/setup", handler.MakeHandler(handler.HandleAccountSetupIndex))
+		g.POST("/account/setup", handler.MakeHandler(handler.HandleAccountSetupPost))
+	})
+
+	router.Group(func(g *gin.Group) {
+		g.Use(handler.WithAuth, handler.WithAccountSetup)
+		g.GET("/settings", handler.MakeHandler(handler.HandleSettingsIndex))
+		g.PUT("/settings/account/profile", handler.MakeHandler(handler.HandleSettingsUsernameUpdate))
+		g.GET("/app", handler.MakeHandler(handler.HandleAppIndex))
+	})
+
+	port := os.Getenv("HTTP_LISTEN_ADDR")
+	slog.Info("application running", "port", port)
+	log.Fatal(http.ListenAndServe(port, router))
+}
+
+func initEnvVar() error {
+	if err := godotenv.Load(); err!= nil {
+		return err
+	}
+	if err := db.Init(); err!= nil {
+		return err
+	}
+	return sb.Init()
+}

@@ -40,7 +40,7 @@ func WithAccountSetup(next fiber.Handler) fiber.Handler {
 			return next(c)
 		}
 		user.Account = account
-		c.Set(types.UserContextKey, user)
+		c.Context().SetUserValue(types.UserContextKey, user)
 		return next(c)
 	}
 }
@@ -51,6 +51,7 @@ func WithUser(next fiber.Handler) fiber.Handler {
 			return next(c)
 		}
 		store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+		// TODO: fiber does not return http.Request, but fasthttp.Request
 		session, err := store.Get(c.Request(), sessionUserKey)
 		if err != nil {
 			return next(c)
@@ -69,7 +70,7 @@ func WithUser(next fiber.Handler) fiber.Handler {
 			LoggedIn:    true,
 			AccessToken: accessToken,
 		}
-		c.Set(types.UserContextKey, user)
+		c.Context().SetUserValue(types.UserContextKey, user)
 		return next(c)
 	}
 }

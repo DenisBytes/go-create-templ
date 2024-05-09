@@ -10,7 +10,7 @@ import (
 	"{{.ProjectName}}/pkg/sb"
 	"{{.ProjectName}}/types"
 	"{{.ProjectName}}/view/auth"
-	"github.com/gofiber/fiber/v2"
+    "github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 	"github.com/nedpals/supabase-go"
 )
@@ -20,55 +20,55 @@ const (
 	sessionAccessTokenKey = "accessToken"
 )
 
-func HandleLogInIndex(c *fiber.Ctx) error {
-	return auth.Login().Render(c.Context(), c.Response().BodyWriter())
+func HandleLogInIndex(c *gin.Context) error {
+
+	return auth.Login().Render(c.Request.Context(), c.Writer)
 }
 
-func HandleLoginPost(c *fiber.Ctx) error {
+func HandleLoginPost(c *gin.Context) error {
 	credentials := supabase.UserCredentials{
-		Email: c.FormValue("email"),
+		Email: c.Request.FormValue("email"),
 	}
-	err := sb.Client.Auth.SendMagicLink(c.Context(), credentials.Email)
+	err := sb.Client.Auth.SendMagicLink(c.Request.Context(), credentials.Email)
 	if err != nil {
 		slog.Error("login error", "err", err)
 		return auth.LoginForm(credentials, auth.LoginErrors{
 			InvalidCredentials: err.Error(),
-		}).Render(c.Context(), c.Response().BodyWriter())
+		}).Render(c.Request.Context(), c.Writer)
 	}
-	return auth.MagicLinkSuccess(credentials.Email).Render(c.Context(), c.Response().BodyWriter())
+	return auth.MagicLinkSuccess(credentials.Email).Render(c.Request.Context(), c.Writer)
 }
 
-func HandleAuthCallback(c *fiber.Ctx) error {
+func HandleAuthCallback(c *gin.Context) error {
 	accessToken := c.Query("access_token")
 	if len(accessToken) == 0 {
-		return auth.CallbackScript().Render(c.Context(), c.Response().BodyWriter())
+		return auth.CallbackScript().Render(c.Request.Context(), c.Writer)
 	}
 	if err := setAuthSession(c, accessToken); err != nil {
 		return err
 	}
-	c.Redirect("/", http.StatusSeeOther)
+	c.Redirect(http.StatusSeeOther, "/")
 	return nil
 }
 
-// TODO: fiber does not return http.Request, but fasthttp.Request
-func setAuthSession(c *fiber.Ctx, accessToken string) error {
+
+func setAuthSession(c *gin.Context, accessToken string) error {
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 	session, _ := store.Get(c.Request, "user")
 	session.Values["accessToken"] = accessToken
-	return session.Save(c.Request, c.Response().BodyWriter())
+	return session.Save(c.Request, c.Writer)
 }
 
-// TODO: fiber does not return http.Request, but fasthttp.Request
-func HandleLogoutPost(c *fiber.Ctx) error {
+func HandleLogoutPost(c *gin.Context) error {
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 	session, _ := store.Get(c.Request, "user")
 	session.Values["accessToken"] = ""
-	session.Save(c.Request, c.Response().BodyWriter())
-	c.Redirect("/login", http.StatusSeeOther)
+	session.Save(c.Request, c.Writer)
+	c.Redirect(http.StatusSeeOther, "/login")
 	return nil
 }
 
-func HandleLoginWithGithubPost(c *fiber.Ctx) error {
+func HandleLoginWithGithubPost(c *gin.Context) error {
 	resp, err := sb.Client.Auth.SignInWithProvider(supabase.ProviderSignInOptions{
 		Provider:   "github",
 		RedirectTo: "http://localhost:3000/auth/callback",
@@ -76,24 +76,24 @@ func HandleLoginWithGithubPost(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	c.Redirect(resp.URL, http.StatusSeeOther)
+	c.Redirect(http.StatusSeeOther, resp.URL)
 	return nil
 }
 
-func HandleAccountSetupIndex(c *fiber.Ctx) error {
-	return auth.AccountSetup().Render(c.Context(), c.Response().BodyWriter())
+func HandleAccountSetupIndex(c *gin.Context) error {
+	return auth.AccountSetup().Render(c.Request.Context(), c.Writer)
 }
 
-func HandleAccountSetupPost(c *fiber.Ctx) error {
+func HandleAccountSetupPost(c *gin.Context) error {
 	params := auth.AccountSetupParams{
-		Username: c.FormValue("username"),
+		Username: c.Request.FormValue("username"),
 	}
 	var errors auth.AccountSetupErrors
 	ok := validate.New(&params, validate.Fields{
 		"Username": validate.Rules(validate.Min(2), validate.Max(50)),
 	}).Validate(&errors)
 	if !ok {
-		return auth.AccountSetupForm(params, errors).Render(c.Context(), c.Response().BodyWriter())
+		return auth.AccountSetupForm(params, errors).Render(c.Request.Context(), c.Writer)
 	}
 	user := GetAuthenticatedUser(c)
 	account := types.Account{
@@ -103,5 +103,6 @@ func HandleAccountSetupPost(c *fiber.Ctx) error {
 	if err := db.CreateAccount(&account); err != nil {
 		return err
 	}
-	return hxRedirect(c, "/")
+	hxRedirect(c, "/")
+	return nil
 }

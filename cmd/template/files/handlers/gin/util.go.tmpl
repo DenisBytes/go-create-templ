@@ -1,0 +1,33 @@
+package handler
+
+import (
+	"net/http"
+	"log"
+	"github.com/gin-gonic/gin"
+	"{{.ProjectName}}/types"
+)
+
+func MakeHandler(h func(*gin.Context) error) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if err := h(c); err!= nil {
+			log.Printf("internal server error: %v, path: %s", err, c.Request.URL.Path)
+		}
+	}
+}
+
+func GetAuthenticatedUser(c *gin.Context) types.AuthenticatedUser {
+	user, ok := c.Get(types.UserContextKey)
+	if !ok {
+		return types.AuthenticatedUser{}
+	}
+	return user.(types.AuthenticatedUser)
+}
+
+func hxRedirect(c *gin.Context, to string) {
+	if len(c.GetHeader("HX-Request")) > 0 {
+		c.Writer.Header().Add("HX-Redirect", to)
+		c.Writer.WriteHeader(http.StatusSeeOther)
+	} else {
+		c.Redirect(http.StatusSeeOther, to)
+	}
+}
