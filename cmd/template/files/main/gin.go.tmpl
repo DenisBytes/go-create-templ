@@ -24,7 +24,7 @@ func main() {
 
 	router := gin.Default()
 
-	router.Use(handler.WithUser)
+	router.Use(handler.MakeHandler(handler.WithUser))
 
 	// Handler for static files
 	router.Static("/*", FS)
