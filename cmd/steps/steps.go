@@ -31,14 +31,14 @@ func InitSteps(projectType flags.Framework) *Steps {
 						Title: "Chi",
 						Desc:  "A lightweight, idiomatic and composable router for building Go HTTP services",
 					},
-					{
-						Title: "Gin",
-						Desc:  "Features a martini-like API with performance that is up to 40 times faster thanks to httprouter",
-					},
-					{
-						Title: "Fiber",
-						Desc:  "An Express inspired web framework built on top of Fasthttp",
-					},
+					// {
+					// 	Title: "Gin",
+					// 	Desc:  "Features a martini-like API with performance that is up to 40 times faster thanks to httprouter",
+					// },
+					// {
+					// 	Title: "Fiber",
+					// 	Desc:  "An Express inspired web framework built on top of Fasthttp",
+					// },
 					{
 						Title: "Echo",
 						Desc:  "High performance, extensible, minimalist Go web framework",

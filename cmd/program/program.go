@@ -51,8 +51,8 @@ func (p *Project) ExitCLI(tprogram *tea.Program) {
 
 var (
 	chiPackage   = []string{"github.com/go-chi/chi/v5"}
-	ginPackage   = []string{"github.com/gin-gonic/gin"}
-	fiberPackage = []string{"github.com/gofiber/fiber/v2"}
+	// ginPackage   = []string{"github.com/gin-gonic/gin"}
+	// fiberPackage = []string{"github.com/gofiber/fiber/v2"}
 	echoPackage  = []string{"github.com/labstack/echo/v4", "github.com/labstack/echo/v4/middleware"}
 
 	godotenvPackage             = []string{"github.com/joho/godotenv"}
@@ -110,15 +110,15 @@ func (p *Project) createFrameworkMap() {
 		templater:   myTemplate.HttpstdTemplates{},
 	}
 
-	p.FrameworkMap[flags.Gin] = Framework{
-		packageName: ginPackage,
-		templater:   myTemplate.GinTemplates{},
-	}
+	// p.FrameworkMap[flags.Gin] = Framework{
+	// 	packageName: ginPackage,
+	// 	templater:   myTemplate.GinTemplates{},
+	// }
 
-	p.FrameworkMap[flags.Fiber] = Framework{
-		packageName: fiberPackage,
-		templater:   myTemplate.FiberTemplates{},
-	}
+	// p.FrameworkMap[flags.Fiber] = Framework{
+	// 	packageName: fiberPackage,
+	// 	templater:   myTemplate.FiberTemplates{},
+	// }
 }
 
 func (p *Project) CreateProject() error {

@@ -9,13 +9,15 @@ type Framework string
 
 const (
 	Chi             Framework = "chi"
-	Gin             Framework = "gin"
+	//Gin             Framework = "gin"
 	Echo            Framework = "echo"
-	Fiber           Framework = "fiber"
+	//Fiber           Framework = "fiber"
 	StandardLibrary Framework = "standard-library"
 )
 
-var AllowedProjectTypes = []string{string(Chi), string(Gin), string(Fiber), string(StandardLibrary), string(Echo)}
+var AllowedProjectTypes = []string{string(Chi), 
+	//string(Gin), string(Fiber), 
+	string(StandardLibrary), string(Echo)}
 
 func (f Framework) String() string {
 	return string(f)

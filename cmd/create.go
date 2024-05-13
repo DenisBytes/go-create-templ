@@ -47,8 +47,7 @@ func init() {
 
 var createCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Create a Go project and don't worry about the structure",
-	Long:  "Go Blueprint is a CLI tool that allows you to focus on the actual Go code, and not the project structure. Perfect for someone new to the Go language",
+	Short: "create-next-app@latest but for go",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		var tprogram *tea.Program
