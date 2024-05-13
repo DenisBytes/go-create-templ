@@ -1,0 +1,11 @@
+package handler
+
+import (
+	"net/http"
+
+	"{{.ProjectName}}/view/app"
+)
+
+func HandleAppIndex(w http.ResponseWriter, r *http.Request) error {
+	return app.Index().Render(r.Context(), w)
+}

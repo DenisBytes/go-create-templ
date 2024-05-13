@@ -1,0 +1,64 @@
+package main
+
+import (
+	"embed"
+	"log"
+	"net/http"
+	"os"
+
+	"{{.ProjectName}}/db"
+	"{{.ProjectName}}/handler"
+	"{{.ProjectName}}/pkg/sb"
+	"github.com/joho/godotenv"
+)
+
+
+/*
+	TODO: 
+	1)fill the empty environment variables in .env
+	2)complete the TODO in /pkg/sb/supabase.go
+	3)go to your Supabase Project, go to Authentication, 
+		then go to URL Configuration and change the Site Url to
+		"http://localhost:3000/auth/callback"
+	4)go on supabase -> Authentication -> Providers and follow the instructions for <chosen_provider> login
+
+*/
+
+//go:embed public/*
+var FS embed.FS
+
+func main() {
+	if err := initEnvVar(); err != nil {
+		log.Fatal("Init err: ", err)
+	}
+
+	http.Handle("/",  http.StripPrefix("/", http.FileServer(http.FS(FS))))
+
+	http.Handle("/", handler.WithUser(handler.MakeHandler(handler.HandleHomeIndex)))
+	http.Handle("/login", handler.WithUser(handler.MakeHandler(handler.HandleLogInIndex)))
+	http.Handle("/login/provider/github", handler.WithUser(handler.MakeHandler(handler.HandleLoginWithGithubPost)))
+	http.Handle("/login", handler.WithUser(handler.MakeHandler(handler.HandleLoginPost)))
+	http.Handle("/auth/callback", handler.WithUser(handler.MakeHandler(handler.HandleAuthCallback)))
+	http.Handle("/logout", handler.WithUser(handler.MakeHandler(handler.HandleLogoutPost)))
+
+    http.Handle("/account/setup", handler.WithAuth(handler.MakeHandler(handler.HandleAccountSetupIndex)))
+    http.Handle("/account/setup", handler.WithAuth(handler.MakeHandler(handler.HandleAccountSetupPost)))
+
+    http.Handle("/settings", handler.WithAccountSetup(handler.MakeHandler(handler.HandleSettingsIndex)))
+    http.Handle("/settings/account/profile", handler.WithAccountSetup(handler.MakeHandler(handler.HandleSettingsUsernameUpdate)))
+    http.Handle("/app", handler.WithAccountSetup(handler.MakeHandler(handler.HandleAppIndex)))
+
+	port := os.Getenv("HTTP_LISTEN_ADDR")
+	log.Printf("application running on port %s\n", port)
+	log.Fatal(http.ListenAndServe(port, nil))
+}
+
+func initEnvVar() error {
+	if err := godotenv.Load(); err != nil {
+		return err
+	}
+	if err := db.Init(); err != nil {
+		return err
+	}
+	return sb.Init()
+}

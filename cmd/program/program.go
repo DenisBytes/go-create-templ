@@ -105,10 +105,10 @@ func (p *Project) createFrameworkMap() {
 		templater:   myTemplate.EchoTemplates{},
 	}
 
-	// p.FrameworkMap[flags.StandardLibrary] = Framework{
-	// 	packageName: []string{},
-	// 	templater:   myTemplate.StandardLibTemplate{},
-	// }
+	p.FrameworkMap[flags.StandardLibrary] = Framework{
+		packageName: []string{},
+		templater:   myTemplate.HttpstdTemplates{},
+	}
 
 	p.FrameworkMap[flags.Gin] = Framework{
 		packageName: ginPackage,
@@ -518,7 +518,7 @@ func (p *Project) CreateProject() error {
 		log.Printf("Could not install go dependency %v\n", err)
 		cobra.CheckErr(err)
 	}
-	
+
 	err = utils.ExecuteCmd("templ", []string{"generate", "view"}, projectPath)
 	if err != nil {
 		log.Printf("Error building templ view: %v", err)
@@ -546,7 +546,6 @@ func (p *Project) CreateProject() error {
 		cobra.CheckErr(err)
 		return err
 	}
-	
 
 	tailwindConfigFile, err := os.Create(filepath.Join(projectPath, "tailwind.config.js"))
 	if err != nil {
